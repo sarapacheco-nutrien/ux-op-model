@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UX AI Operating Model</title>
+<style>
+  :root {
+    --bg: #001810;
+    --bg2: #002920;
+    --teal: #5CB800;
+    --purple: #007A4C;
+    --purple-light: #4EC38A;
+    --white: #F1F1F1;
+    --muted: #7A9E8A;
+    --card-bg: rgba(0, 30, 18, 0.85);
+    --border: rgba(92, 184, 0, 0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ─── DECK ─── */
+  .deck {
+    width: 100%; height: 100%;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.55s cubic-bezier(.4,0,.2,1), transform 0.55s cubic-bezier(.4,0,.2,1);
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ─── SHARED BG ELEMENTS ─── */
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(92,184,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(92,184,0,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  .bg-glow-teal {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(120,190,32,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .bg-glow-purple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,122,76,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ─── SLIDE 1: COVER ─── */
+  #s1 { background: var(--bg); justify-content: center; align-items: flex-start; }
+
+  #s1 .bg-glow-teal { width: 600px; height: 600px; top: -150px; right: -100px; }
+  #s1 .bg-glow-purple { width: 500px; height: 500px; bottom: -200px; left: -100px; }
+
+  .cover-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 24px;
+    font-weight: 600;
+  }
+
+  .cover-title {
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+    max-width: 700px;
+  }
+
+  .cover-title em {
+    font-style: normal;
+    color: var(--white);
+  }
+
+  .cover-subtitle {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 400;
+  }
+
+  .cover-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    border-radius: 0;
+    background: rgba(92,184,0,0.04);
+  }
+
+  .cover-date span { color: var(--teal); font-weight: 600; }
+
+  .cover-line {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--teal), transparent);
+    right: 80px;
+  }
+
+  .cover-badge {
+    position: absolute;
+    right: 100px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cover-badge-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 12px var(--teal);
+  }
+
+  .cover-badge-text {
+    writing-mode: vertical-rl;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ─── SLIDE 2: MISSION ─── */
+  #s2 { background: var(--bg2); align-items: flex-start; justify-content: center; padding: 50px 70px; }
+  #s2 .bg-glow-purple { width: 800px; height: 400px; top: -100px; left: -200px; }
+  #s2 .bg-glow-teal { width: 400px; height: 400px; bottom: -150px; right: -50px; }
+
+  .mission-layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .mission-text-col {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+  }
+
+  .mission-image-wrap {
+    position: absolute;
+    left: -80px;
+    top: -60px;
+    bottom: -60px;
+    width: 48%;
+    overflow: hidden;
+  }
+
+  .mission-image-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to left, var(--bg2) 0%, rgba(0,41,32,0.3) 35%, transparent 70%);
+  }
+
+  .mission-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center center;
+    filter: hue-rotate(90deg) saturate(0.85) brightness(0.7);
+    display: block;
+  }
+
+  .slide-label {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .slide-title {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 40px;
+  }
+
+  .slide-title .accent { color: var(--teal); }
+  .slide-title .accent2 { color: var(--purple-light); }
+
+  .mission-body {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    gap: 0 28px;
+    align-items: start;
+    margin-top: 4px;
+  }
+
+  .mission-divider {
+    background: linear-gradient(to bottom, transparent, var(--border), transparent);
+    height: 100%;
+  }
+
+  .mission-col p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(240,244,255,0.82);
+  }
+
+  .mission-col p + p {
+    margin-top: 20px;
+  }
+
+  .mission-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--teal);
+    border: 1px solid rgba(120,190,32,0.3);
+    padding: 5px 14px;
+    border-radius: 0;
+    margin-bottom: 20px;
+    background: rgba(120,190,32,0.06);
+  }
+
+  .mission-human {
+    margin-top: 36px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    grid-column: 1 / -1;
+  }
+
+  .mission-human::before {
+    content: '';
+    display: block;
+    width: 32px; height: 2px;
+    background: var(--teal);
+  }
+
+  /* ─── SLIDE 3: EVOLUTION ─── */
+  #s3 { background: var(--bg); align-items: flex-start; padding: 50px 70px; }
+  #s3 .bg-glow-teal { width: 500px; height: 300px; top: -50px; right: -100px; }
+
+  .evolution-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .evo-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 22px 24px;
+    position: relative;
+    backdrop-filter: blur(10px);
+  }
+
+  .evo-card .now-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    border-radius: 0;
+    display: inline-block;
+  }
+
+  .now-label.was { color: var(--muted); background: rgba(122,143,176,0.12); }
+  .now-label.now { color: var(--teal); background: rgba(120,190,32,0.1); }
+
+  .evo-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .evo-card .was-text { color: var(--muted); font-size: 12px; font-style: italic; line-height: 1.5; }
+  .evo-card .now-text { color: rgba(240,244,255,0.85); font-size: 12px; line-height: 1.5; }
+
+  .evo-arrow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px; height: 32px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--teal);
+    z-index: 2;
+  }
+
+  /* ─── SLIDE 4: ENGAGEMENT MODEL ─── */
+  #s4 { background: var(--bg2); align-items: flex-start; padding: 50px 70px; }
+  #s4 .bg-glow-purple { width: 600px; height: 600px; bottom: -200px; right: -200px; }
+
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .pillar-card {
+    background: rgba(8, 15, 30, 0.7);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    border-radius: 0;
+    padding: 22px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .pillar-card:hover { border-color: rgba(124,58,237,0.5); }
+
+  .pillar-num {
+    font-size: 48px;
+    font-weight: 900;
+    color: rgba(0,122,76,0.15);
+    position: absolute;
+    top: 8px; right: 14px;
+    line-height: 1;
+    font-family: monospace;
+  }
+
+  .pillar-icon {
+    width: 36px; height: 36px;
+    border-radius: 0;
+    background: rgba(0,122,76,0.15);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+    font-size: 17px;
+  }
+
+  .pillar-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--purple-light); }
+  .pillar-card p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  .engagement-intro {
+    font-size: 16px;
+    color: rgba(240,244,255,0.75);
+    margin-bottom: 8px;
+    max-width: 700px;
+  }
+
+  /* ─── SLIDE 5: DELIVERY PATHWAYS ─── */
+
+  .pathway-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    width: 100%;
+    margin-top: 12px;
+    align-items: stretch;
+  }
+
+  .pathway-card {
+    border-radius: 0;
+    padding: 28px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pathway-card.tier1 {
+    background: rgba(0,20,12,0.6);
+    border: 1px solid rgba(120,190,32,0.15);
+    border-right: none;
+    margin-top: 20px;
+  }
+
+  .pathway-card.tier2 {
+    background: linear-gradient(160deg, rgba(0,60,36,0.95), rgba(0,40,24,0.9));
+    border: 1px solid rgba(78,195,138,0.55);
+    box-shadow: 0 0 40px rgba(0,122,76,0.25), inset 0 1px 0 rgba(78,195,138,0.3);
+    padding-top: 44px;
+    z-index: 1;
+  }
+
+  .pathway-card.tier3 {
+    background: rgba(0,20,12,0.6);
+    border: 1px solid rgba(120,190,32,0.15);
+    border-left: none;
+    margin-top: 20px;
+  }
+
+  .tier2-popular-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--purple-light), var(--teal));
+  }
+
+  .tier2-popular-label {
+    position: absolute;
+    top: 14px; left: 50%; transform: translateX(-50%);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    white-space: nowrap;
+  }
+
+  .pathway-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 0;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  .tier1 .pathway-badge { color: var(--teal); background: rgba(120,190,32,0.1); }
+  .tier2 .pathway-badge { color: var(--purple-light); background: rgba(78,195,138,0.15); }
+  .tier3 .pathway-badge { color: #4EC38A; background: rgba(78,195,138,0.1); }
+
+  .pathway-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .pathway-card .path-desc { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+
+  .phase-list { list-style: none; }
+  .phase-list li {
+    font-size: 13px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+    color: rgba(240,244,255,0.7);
+  }
+
+  .phase-list li:last-child { border-bottom: none; }
+  .phase-list .phase-name { font-weight: 600; color: var(--white); }
+  .phase-list .phase-val { font-size: 12px; text-align: right; }
+  .phase-list .req { color: var(--teal); }
+  .phase-list .opt { color: var(--muted); }
+  .phase-list .none { color: rgba(122,143,176,0.5); }
+
+  .pathway-outcome {
+    margin-top: 16px;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* ─── SLIDE 5: ENGAGEMENT CYCLES TIMELINE ─── */
+  #s5 { background: var(--bg2); align-items: flex-start; justify-content: center; padding: 50px 70px; }
+
+  .ec-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+    width: 100%;
+  }
+
+  .ec-row-label {
+    width: 260px;
+    flex-shrink: 0;
+    padding-top: 6px;
+  }
+
+  .ec-row-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid;
+    margin-bottom: 8px;
+  }
+
+  .ec-row-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .ec-row-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .ec-timeline {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 6px;
+    gap: 16px;
+  }
+
+  .ec-phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .ec-phase-dot { display: none; }
+
+  .ec-phase-name {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--phase-color, rgba(255,255,255,0.25));
+  }
+
+  .ec-phase-activity {
+    text-align: center;
+    padding: 8px 10px;
+    background: rgba(0,20,12,0.5);
+    border: 1px solid var(--phase-color, transparent);
+    min-height: 52px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ec-phase:not(.active) .ec-phase-activity {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .ec-activity-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ec-activity-methods {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .ec-connector { display: none; }
+  .ec-connector-ORIG {
+    height: 2px;
+    flex: 0 0 24px;
+    margin-top: 4px;
+    background: rgba(255,255,255,0.1);
+    align-self: flex-start;
+  }
+
+  .ec-connector.active {
+    background: linear-gradient(90deg, var(--teal), rgba(92,184,0,0.5));
+  }
+
+  /* ─── SLIDE 7: FUTURE STATE ─── */
+  #s7 { background: var(--bg); align-items: flex-start; padding: 50px 70px; }
+  #s7 .bg-glow-purple { width: 700px; height: 500px; top: -150px; right: -200px; }
+  #s7 .bg-glow-teal { width: 400px; height: 400px; bottom: -200px; left: -100px; }
+
+  .future-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    width: 100%;
+    margin-top: 12px;
+    align-items: start;
+  }
+
+  .future-left {}
+
+  .future-benefits {
+    list-style: none;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .future-benefits li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    font-size: 14px;
+    color: rgba(240,244,255,0.82);
+    line-height: 1.55;
+  }
+
+  .benefit-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(120,190,32,0.15);
+    border: 1.5px solid var(--teal);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .benefit-dot::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  .future-right {}
+
+  .system-diagram {
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 24px;
+    background: rgba(13,26,46,0.6);
+    backdrop-filter: blur(10px);
+  }
+
+  .diagram-layer {
+    border-radius: 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .diagram-layer:last-child { margin-bottom: 0; }
+
+  .diagram-layer.enterprise {
+    background: rgba(0,122,76,0.12);
+    border: 1px solid rgba(0,122,76,0.25);
+  }
+
+  .diagram-layer.digital {
+    background: rgba(120,190,32,0.08);
+    border: 1px solid rgba(120,190,32,0.2);
+  }
+
+  .diagram-layer.downstream {
+    background: rgba(78,195,138,0.08);
+    border: 1px solid rgba(78,195,138,0.2);
+  }
+
+  .layer-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .enterprise .layer-title { color: var(--purple-light); }
+  .digital .layer-title { color: var(--teal); }
+  .downstream .layer-title { color: #4EC38A; }
+
+  .layer-desc { font-size: 11.5px; color: var(--muted); }
+
+  .layer-arrow {
+    text-align: center;
+    color: var(--muted);
+    font-size: 16px;
+    margin: -4px 0 6px;
+  }
+
+  /* ─── SLIDE NAV ─── */
+  .nav {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    background: rgba(8,15,30,0.85);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 10px 20px;
+    backdrop-filter: blur(20px);
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 0;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .nav-btn:hover:not(:disabled) { color: var(--teal); background: rgba(120,190,32,0.08); }
+  .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+  .nav-dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(122,143,176,0.3);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+  }
+
+  .nav-dot.active {
+    background: var(--teal);
+    width: 20px;
+    border-radius: 0;
+    box-shadow: 0 0 8px rgba(120,190,32,0.5);
+  }
+
+  .nav-counter {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: monospace;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  /* ─── THUMBNAIL OVERVIEW ─── */
+  #thumb-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 10, 6, 0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    backdrop-filter: blur(8px);
+  }
+  #thumb-panel.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  #thumb-panel h3 {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+    font-weight: 600;
+  }
+  .thumb-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    max-width: 1000px;
+    width: 90%;
+  }
+  .thumb-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    padding: 18px 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  .thumb-card:hover {
+    border-color: var(--teal);
+    transform: scale(1.03);
+  }
+  .thumb-card.thumb-active {
+    border-color: var(--teal);
+    box-shadow: 0 0 12px rgba(92,184,0,0.3);
+  }
+  .thumb-num {
+    font-size: 32px;
+    font-weight: 800;
+    color: rgba(92,184,0,0.12);
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    line-height: 1;
+    font-family: monospace;
+  }
+  .thumb-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .thumb-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.3;
+  }
+  .thumb-accent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--teal);
+    width: 0;
+    transition: width 0.2s;
+  }
+  .thumb-card:hover .thumb-accent,
+  .thumb-card.thumb-active .thumb-accent { width: 100%; }
+  .thumb-close {
+    position: absolute;
+    top: 28px;
+    right: 36px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px 12px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .thumb-close:hover { color: var(--white); border-color: var(--teal); }
+  .nav-grid-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px 8px;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+  .nav-grid-btn:hover { color: var(--teal); }
+
+  /* ─── SLIDE 2 TEXT ANIMATION ─── */
+  @keyframes textFadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #s2 .s2-left, #s2 .s2-right { opacity: 0; }
+  #s2.text-ready .s2-left {
+    animation: textFadeUp 0.7s ease-out 0.1s forwards;
+  }
+  #s2.text-ready .s2-right {
+    animation: textFadeUp 0.7s ease-out 0.35s forwards;
+  }
+
+  /* ─── SLIDE 2 RESPONSIVE ─── */
+  @media (max-width: 1139px) {
+    #s2 {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    #s2 .s2-face {
+      position: static !important;
+      width: 100% !important;
+      height: 50vw !important;
+      max-height: 380px;
+      order: -1;
+      flex-shrink: 0;
+    }
+    #s2 .s2-left {
+      position: static !important;
+      width: 100% !important;
+      padding: 36px 40px 20px !important;
+      order: 0;
+    }
+    #s2 .s2-right {
+      position: static !important;
+      width: 100% !important;
+      padding: 0 40px 48px !important;
+      order: 1;
+    }
+  }
+
+  /* ─── SLIDE 4 CARD DROP-IN ─── */
+  @keyframes cardDropIn {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #s4 .pathway-card {
+    opacity: 0;
+  }
+  #s4.cards-ready .pathway-card:nth-child(1) {
+    animation: cardDropIn 0.45s cubic-bezier(.2,.8,.3,1) 0.05s forwards;
+  }
+  #s4.cards-ready .pathway-card:nth-child(2) {
+    animation: cardDropIn 0.45s cubic-bezier(.2,.8,.3,1) 0.22s forwards;
+  }
+  #s4.cards-ready .pathway-card:nth-child(3) {
+    animation: cardDropIn 0.45s cubic-bezier(.2,.8,.3,1) 0.39s forwards;
+  }
+
+  /* ─── SLIDE 5: BOX SLIDE-IN ANIMATION ─── */
+  @keyframes boxSlideIn {
+    from { opacity: 0; transform: translateX(18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  #s5 .ec-phase.active .ec-phase-activity { opacity: 0; }
+  #s5.boxes-ready .ec-phase.active .ec-phase-activity { animation: boxSlideIn 0.5s ease-out forwards; }
+
+  /* ─── SLIDE 6: RESOURCE BAR LIST ─── */
+  .res-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .res-item { width: 100%; }
+
+  .res-item-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 7px;
+  }
+
+  .res-item-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .res-item-sub {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .res-bar-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.07);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .res-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    opacity: 0.85;
+  }
+
+  @keyframes barFill {
+    from { width: 0; }
+    to   { width: var(--bar-width); }
+  }
+
+  #s6.stack-ready .res-bar {
+    animation: barFill 0.7s cubic-bezier(.4,0,.2,1) var(--bar-delay) forwards;
+  }
+
+  /* ─── SLIDE NUMBER BADGE ─── */
+  .slide-num {
+    position: absolute;
+    top: 32px;
+    right: 36px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(to right, #5CB800, #204496);
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+    box-shadow: 0 0 8px var(--teal);
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide active" id="s1">
+    <div class="bg-grid"></div>
+    <div class="cover-line"></div>
+    <div class="cover-badge">
+      <div class="cover-badge-dot"></div>
+      <div class="cover-badge-text">AI-Powered Workflows</div>
+    </div>
+
+    <div class="cover-eyebrow">Digital User Experience</div>
+    <h1 class="cover-title">UX<br>Operating<br>Model</h1>
+    <p class="cover-subtitle">How UX works inside the Digital Shop</p>
+    <p style="font-size:13px;color:var(--muted);font-weight:400;margin-bottom:48px;">Velocity + Guardrails + Partnership</p>
+    <div class="cover-date">
+      <span>Last updated September 2026</span>
+    </div>
+    <div class="slide-num">01 / 06</div>
+  </div>
+
+  <!-- SLIDE 2: MISSION -->
+  <div class="slide" id="s2" style="padding:0;">
+    <div class="bg-grid"></div>
+
+    <!-- Left column: label + heading + tagline + first two paragraphs -->
+    <div class="s2-left" style="position:absolute;left:0;top:0;bottom:0;width:28%;display:flex;flex-direction:column;justify-content:center;padding:60px 28px 60px 56px;">
+      <div style="width:28px;height:2px;background:var(--teal);margin-bottom:20px;"></div>
+      <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:14px;">Digital User Experience</div>
+      <h2 style="font-size:34px;font-weight:800;letter-spacing:-0.5px;color:var(--white);margin-bottom:10px;line-height:1.15;">How UX Creates Impact</h2>
+      <p style="font-size:18px;color:var(--muted);font-weight:400;margin-bottom:24px;line-height:1.6;">Adaptive partnership. Evolving craft.<br>Meaningful outcomes. Always human.</p>
+      <p style="font-size:16px;line-height:1.7;color:var(--white);margin-bottom:18px;">We partner across the lifecycle – from ideas to outcomes – <strong>shifting our engagement to meet the moment.</strong></p>
+      <p style="font-size:16px;line-height:1.7;color:var(--white);">We accelerate our craft using evolving technologies while preserving the voice of the user as we invent on their behalf.</p>
+    </div>
+
+    <!-- Center: face video -->
+    <div class="s2-face" style="position:absolute;left:28%;right:32%;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <video src="face-graphic.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;display:block;"></video>
+    </div>
+
+    <!-- Right column: remaining copy -->
+    <div class="s2-right" style="position:absolute;right:0;top:0;bottom:0;width:32%;display:flex;flex-direction:column;justify-content:center;padding:60px 56px 60px 24px;">
+      <p style="font-size:16px;line-height:1.7;color:var(--white);margin-bottom:28px;">Through tactical execution and demonstrating the art of the possible, UX translates complexity into clarity, giving users back their time while raising the bar in our digital platforms.</p>
+      <div>
+        <div style="width:36px;height:2px;background:var(--teal);margin-bottom:10px;"></div>
+        <p style="font-size:18px;line-height:1.5;color:var(--white);font-weight:700;">At the core of it all, our work remains deeply human.</p>
+      </div>
+    </div>
+
+    <div class="slide-num">02 / 06</div>
+  </div>
+
+  <!-- SLIDE 3: EVOLUTION -->
+  <div class="slide" id="s3" style="padding:0;">
+    <div class="bg-grid"></div>
+
+    <!-- Left: arrow video -->
+    <div style="position:absolute;left:0;top:0;bottom:0;width:46%;overflow:hidden;">
+      <video id="s3-arrow" src="slide3-arrow.webm" muted playsinline style="width:145%;height:auto;display:block;position:absolute;top:50%;left:-20%;transform:translateY(-50%);"></video>
+    </div>
+
+    <!-- Right: content -->
+    <div style="position:absolute;right:0;top:0;bottom:0;width:52%;display:flex;flex-direction:column;justify-content:center;padding:36px 60px 36px 30px;gap:14px;">
+      <div>
+        <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:8px;">Transformation</div>
+        <h2 class="slide-title" style="margin-bottom:0;position:static;color:var(--white);">At the speed of <em style="color:var(--white);font-style:italic;">what's next</em></h2>
+      </div>
+
+      <!-- Where We're Headed -->
+      <div style="padding:0;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;padding:5px 12px;display:inline-block;margin-bottom:14px;color:var(--teal);background:rgba(120,190,32,0.12);">Where We're Headed</div>
+        <div>
+          <div style="padding-bottom:12px;border-bottom:1px solid rgba(92,184,0,0.12);">
+            <div style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:4px;">Sophisticated Light-Layer of Design</div>
+            <p style="font-size:14px;color:rgba(240,244,255,0.75);line-height:1.5;">Figma design artifacts and enhanced user flows as focused output, iterating in real-time with users for key features.</p>
+          </div>
+          <div style="padding:12px 0;border-bottom:1px solid rgba(92,184,0,0.12);">
+            <div style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:4px;">Partnership + Resources</div>
+            <p style="font-size:14px;color:rgba(240,244,255,0.75);line-height:1.5;">Embedded advisory and design reviews in place of exhaustive design direction. UX-focused steering files and implementation guides that inform repeatable patterns and design standards.</p>
+          </div>
+          <div style="padding:12px 0;border-bottom:1px solid rgba(92,184,0,0.12);">
+            <div style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:4px;">Rise Design System</div>
+            <p style="font-size:14px;color:rgba(240,244,255,0.75);line-height:1.5;">Component library, design tokens, and detailed documentation — the shared foundation that makes repeatable, scalable UI possible across the Hub.</p>
+          </div>
+          <div style="padding-top:12px;">
+            <div style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:4px;">Stewardship + Art of the Possible</div>
+            <p style="font-size:14px;color:rgba(240,244,255,0.75);line-height:1.5;">Vision concepts and inventing bar-raising experiences; stewardship of high-stakes, multi-phase workflows to support scalability and future-proofing experience architecture.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Challenges strip -->
+      <div style="margin-top:30px;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(140,130,121,0.9);font-weight:700;margin-bottom:10px;">Challenges We're Overcoming</div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <div style="display:flex;gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:11px;font-weight:700;color:#8c8279;font-family:monospace;flex-shrink:0;">01</span>
+            <p style="font-size:13px;color:rgba(200,210,220,0.55);line-height:1.5;font-style:italic;">Time-intensive design for every interaction across all breakpoints.</p>
+          </div>
+          <div style="display:flex;gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:11px;font-weight:700;color:#8c8279;font-family:monospace;flex-shrink:0;">02</span>
+            <p style="font-size:13px;color:rgba(200,210,220,0.55);line-height:1.5;font-style:italic;">Churn on collective understanding of requirements that results in Figma becoming source of truth.</p>
+          </div>
+          <div style="display:flex;gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:11px;font-weight:700;color:#8c8279;font-family:monospace;flex-shrink:0;">03</span>
+            <p style="font-size:13px;color:rgba(200,210,220,0.55);line-height:1.5;font-style:italic;">Diminished delivery quality due to unpredictable engagement from engineers on design reviews.</p>
+          </div>
+          <div style="display:flex;gap:14px;align-items:baseline;padding:9px 0;">
+            <span style="font-size:11px;font-weight:700;color:#8c8279;font-family:monospace;flex-shrink:0;">04</span>
+            <p style="font-size:13px;color:rgba(200,210,220,0.55);line-height:1.5;font-style:italic;">Logging design and experience bugs for engineers to address after features have gone to production.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="slide-num">03 / 06</div>
+  </div>
+
+  <!-- SLIDE 4: DELIVERY PATHWAYS -->
+  <div class="slide" id="s4">
+    <div class="bg-grid"></div>
+
+    <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:8px;">Delivery</div>
+    <h2 class="slide-title" style="margin-bottom:10px;color:var(--white);">Design engagement scales to<br>match feature <em style="font-style:italic;color:var(--white);">complexity</em></h2>
+
+    <div class="pathway-grid">
+      <div class="pathway-card tier1">
+        <div class="pathway-badge">Tier 1</div>
+        <h3>Engineer-Led UI</h3>
+        <p class="path-desc">Changes to existing features leveraging established patterns.</p>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px;">How UX will engage:</div>
+        <ul class="phase-list">
+          <li><span class="phase-name">Pre-work + discovery</span><span class="phase-val none">None</span></li>
+          <li><span class="phase-name">Advisory</span><span class="phase-val opt">Product lane UX designer(s), bi-weekly office hours</span></li>
+          <li><span class="phase-name">User flows</span><span class="phase-val opt">Upon request</span></li>
+          <li><span class="phase-name">Figma design artifacts</span><span class="phase-val none">None</span></li>
+          <li><span class="phase-name">Design reviews</span><span class="phase-val req">Required — feedback at demo stage</span></li>
+          <li><span class="phase-name">Resources</span><span class="phase-val opt">Steering files, delivery kits</span></li>
+        </ul>
+        <p class="pathway-outcome">Faster delivery with minimal resource impact.</p>
+      </div>
+
+      <div class="pathway-card tier2">
+        <div class="tier2-popular-bar"></div>
+        <div class="tier2-popular-label">★ Most Common ★</div>
+        <div class="pathway-badge">Tier 2</div>
+        <h3>Directional Design</h3>
+        <p class="path-desc">Notable extensions of existing patterns or follow-on phases of larger features.</p>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px;">How UX will engage:</div>
+        <ul class="phase-list">
+          <li><span class="phase-name">Pre-work + discovery</span><span class="phase-val opt">Requirements review, rapid user insights when possible</span></li>
+          <li><span class="phase-name">Advisory</span><span class="phase-val opt">Product lane UX designer(s), bi-weekly office hours</span></li>
+          <li><span class="phase-name">User flows</span><span class="phase-val opt">Enhanced user flow</span></li>
+          <li><span class="phase-name">Figma design artifacts</span><span class="phase-val opt">Directional — focus on key workflows, novel layouts</span></li>
+          <li><span class="phase-name">Design reviews</span><span class="phase-val req">Required — feedback at demo stage</span></li>
+          <li><span class="phase-name">Resources</span><span class="phase-val opt">Steering files, delivery kits</span></li>
+        </ul>
+        <p class="pathway-outcome">Cross-functional alignment, faster delivery, solidified design direction.</p>
+      </div>
+
+      <div class="pathway-card tier3">
+        <div class="pathway-badge">Tier 3</div>
+        <h3>High-Stakes Workflows</h3>
+        <p class="path-desc">Net-new or high-stakes experiences requiring user validation, SME engagement, and an extended runway for deeper exploration.</p>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px;">How UX will engage:</div>
+        <ul class="phase-list">
+          <li><span class="phase-name">Pre-work + discovery</span><span class="phase-val opt">Requirements review, user insights, SME engagement, cross-functional jam sessions</span></li>
+          <li><span class="phase-name">Advisory</span><span class="phase-val opt">Product lane UX designer(s), bi-weekly office hours</span></li>
+          <li><span class="phase-name">User flows</span><span class="phase-val opt">Enhanced user flow</span></li>
+          <li><span class="phase-name">Figma design artifacts</span><span class="phase-val opt">Extensive directional — key workflows, notable interaction points</span></li>
+          <li><span class="phase-name">Design reviews</span><span class="phase-val req">Required — ongoing in partnership with engineering through implementation</span></li>
+          <li><span class="phase-name">Resources</span><span class="phase-val opt">Steering files, delivery kits</span></li>
+        </ul>
+        <p class="pathway-outcome">Deep field trust through engaged delivery, cross-functional alignment, sophisticated user experiences that support system evolution.</p>
+      </div>
+    </div>
+    <div class="slide-num">04 / 06</div>
+  </div>
+
+  <!-- SLIDE 5: USER ENGAGEMENT CYCLES -->
+  <div class="slide" id="s5">
+    <div class="bg-grid"></div>
+    <div class="slide-num">05 / 06</div>
+
+    <!-- Header -->
+    <div style="width:100%;margin-bottom:28px;">
+      <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:16px;">Research &amp; Validation</div>
+      <h2 class="slide-title" style="margin-bottom:6px;">When does user engagement happen?</h2>
+      <p style="font-size:16px;color:var(--muted);line-height:1.5;">Research and validation can slot into any phase based on workflow complexity</p>
+    </div>
+
+    <!-- Timeline rows -->
+    <div style="width:100%;display:flex;flex-direction:column;gap:16px;flex:1;justify-content:center;">
+
+      <!-- Row 1: High-Stakes / Upfront -->
+      <div class="ec-row">
+        <div class="ec-row-label">
+
+          <div class="ec-row-title">High-Stakes Workflows</div>
+          <div class="ec-row-desc">SMEs and users engaged upfront to inform the solution — learnings carry into follow-on phases.</div>
+        </div>
+        <div class="ec-timeline">
+          <div class="ec-phase active" style="--phase-color:#5CB800;">
+            <div class="ec-phase-dot"></div>
+            <div class="ec-phase-name" style="color:rgba(241,241,241,0.45);">Pre-Build</div>
+            <div class="ec-phase-activity">
+              <div class="ec-activity-label">Research</div>
+              <div class="ec-activity-methods">Contextual inquiry · Surveys · SME interviews</div>
+            </div>
+          </div>
+          <div class="ec-connector active"></div>
+          <div class="ec-phase active" style="--phase-color:#5CB800;">
+            <div class="ec-phase-dot"></div>
+            <div class="ec-phase-name" style="color:rgba(241,241,241,0.45);">Development</div>
+            <div class="ec-phase-activity">
+              <div class="ec-activity-label">Validation</div>
+              <div class="ec-activity-methods">1:1 feedback · Iteration</div>
+            </div>
+          </div>
+          <div class="ec-connector active"></div>
+          <div class="ec-phase active" style="--phase-color:#5CB800;">
+            <div class="ec-phase-dot"></div>
+            <div class="ec-phase-name" style="color:rgba(241,241,241,0.45);">Launch</div>
+            <div class="ec-phase-activity">
+              <div class="ec-activity-label">Usability</div>
+              <div class="ec-activity-methods">Learnings for follow-on phases</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="width:100%;height:1px;background:rgba(255,255,255,0.06);"></div>
+
+      <!-- Row 2: Learn in Market -->
+      <div class="ec-row">
+        <div class="ec-row-label">
+
+          <div class="ec-row-title">Faster-Moving Experiences</div>
+          <div class="ec-row-desc">“Learn in Market” — lightweight feedback loops with a trusted subset of users post-launch.</div>
+        </div>
+        <div class="ec-timeline">
+          <div class="ec-phase" style="--phase-color:rgba(255,255,255,0.15);">
+            <div class="ec-phase-dot"></div>
+            <div class="ec-phase-name">Pre-Build</div>
+            <div class="ec-phase-activity" style="visibility:hidden;">
+              <div class="ec-activity-label">&nbsp;</div>
+            </div>
+          </div>
+          <div class="ec-connector"></div>
+          <div class="ec-phase" style="--phase-color:rgba(255,255,255,0.15);">
+            <div class="ec-phase-dot"></div>
+            <div class="ec-phase-name">Development</div>
+            <div class="ec-phase-activity" style="visibility:hidden;">
+              <div class="ec-activity-label">&nbsp;</div>
+            </div>
+          </div>
+          <div class="ec-connector"></div>
+          <div class="ec-phase active" style="--phase-color:#8c8279;">
+            <div class="ec-phase-dot"></div>
+            <div class="ec-phase-name" style="color:rgba(241,241,241,0.45);">Launch</div>
+            <div class="ec-phase-activity">
+              <div class="ec-activity-label" style="color:#8c8279;">Learn in Market</div>
+              <div class="ec-activity-methods">Qualitative feedback · Behavioral analytics · Feedback loops</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- SLIDE 7: DELIVERY KITS & IMPLEMENTATION GUIDES -->
+  <div class="slide" id="s6" style="padding:0;">
+    <div class="bg-grid"></div>
+
+    <!-- Right: resource bar list -->
+    <div style="position:absolute;right:0;top:0;bottom:0;width:34%;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:200px 28px 36px 72px;gap:16px;">
+      <div>
+        <div style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(241,241,241,0.75);font-weight:700;margin-bottom:6px;">Resources at a Glance</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0;">When timelines prohibit UX from creating high-fidelity directional design in Figma, these resources will help us keep quality on track.</p>
+      </div>
+      <div class="res-list">
+
+        <div class="res-item">
+          <div class="res-item-header">
+            <span class="res-item-name">Steering Files + Implementation Guides</span>
+            <span class="res-item-sub">Build guide · Rules · Pitfalls</span>
+          </div>
+          <div class="res-bar-track"><div class="res-bar" style="--bar-width:100%;--bar-delay:0.1s;background:var(--purple-light);"></div></div>
+        </div>
+
+        <div class="res-item">
+          <div class="res-item-header">
+            <span class="res-item-name">Delivery Kits</span>
+            <span class="res-item-sub">Nine pattern archetypes</span>
+          </div>
+          <div class="res-bar-track"><div class="res-bar" style="--bar-width:100%;--bar-delay:0.25s;background:var(--teal);"></div></div>
+        </div>
+
+        <div class="res-item">
+          <div class="res-item-header">
+            <span class="res-item-name">Office Hours</span>
+            <span class="res-item-sub">Twice weekly · Open to all</span>
+          </div>
+          <div class="res-bar-track"><div class="res-bar" style="--bar-width:100%;--bar-delay:0.4s;background:var(--purple-light);"></div></div>
+        </div>
+
+        <div class="res-item">
+          <div class="res-item-header">
+            <span class="res-item-name">Enhanced User Flows</span>
+            <span class="res-item-sub">High-fidelity diagram capturing key user actions and pathways</span>
+          </div>
+          <div class="res-bar-track"><div class="res-bar" style="--bar-width:100%;--bar-delay:0.55s;background:var(--teal);"></div></div>
+        </div>
+
+        <div class="res-item">
+          <div class="res-item-header">
+            <span class="res-item-name">Rise Design System</span>
+            <span class="res-item-sub">Component library &amp; tokens</span>
+          </div>
+          <div class="res-bar-track"><div class="res-bar" style="--bar-width:100%;--bar-delay:0.7s;background:var(--purple-light);"></div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Left: content -->
+    <div style="position:absolute;left:0;top:0;bottom:0;width:68%;display:flex;flex-direction:column;justify-content:flex-start;padding:42px 28px 36px 56px;gap:36px;">
+
+      <!-- Header -->
+      <div>
+        <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:6px;position:static;">Developer Resources</div>
+        <h2 class="slide-title" style="margin-bottom:4px;position:static;color:var(--white);">Implementation Guides &amp; Delivery Kits</h2>
+        <p style="font-size:16px;color:var(--muted);line-height:1.5;">When UX cannot play an active role in every feature, these resources support quality at scale.</p>
+      </div>
+
+      <!-- UX Steering Files table -->
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <div style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(241,241,241,0.75);font-weight:700;">UX Steering Files</div>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7EB8F7;background:rgba(126,184,247,0.08);border:1px solid rgba(126,184,247,0.3);padding:2px 7px;">Evolving</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <th style="text-align:left;padding:6px 12px 6px 0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;width:36%;">File</th>
+              <th style="text-align:left;padding:6px 0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:9px 12px 9px 0;vertical-align:top;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--purple-light);background:rgba(78,195,138,0.1);border:1px solid rgba(78,195,138,0.25);padding:2px 6px;white-space:nowrap;">Master</span>
+                  <a href="ux-steering-files/ux.md" style="font-weight:700;color:var(--white);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.25);">ux</a>
+                </div>
+              </td>
+              <td style="padding:9px 0;color:rgba(241,241,241,0.65);line-height:1.5;vertical-align:top;">Top-level UX standards file. Sets design system rules and calls the design thinking and Rise implementation guides.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px 9px 0;vertical-align:top;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:rgba(122,158,138,0.08);border:1px solid rgba(122,158,138,0.2);padding:2px 6px;white-space:nowrap;">Referenced</span>
+                  <a href="ux-steering-files/ux-design-thinking.md" style="font-weight:700;color:var(--white);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.25);">ux-design-thinking</a>
+                </div>
+              </td>
+              <td style="padding:9px 0;color:rgba(241,241,241,0.65);line-height:1.5;vertical-align:top;">Foundational guidance on who our users are, the conditions they work in, and how to reason about design decisions on their behalf.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rise Implementation Guides table -->
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <div style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(241,241,241,0.75);font-weight:700;">Rise Implementation Guides</div>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#F79420;background:rgba(247,148,32,0.1);border:1px solid rgba(247,148,32,0.3);padding:2px 7px;">Experimental</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <th style="text-align:left;padding:6px 12px 6px 0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;width:36%;">File</th>
+              <th style="text-align:left;padding:6px 0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:9px 12px 9px 0;vertical-align:top;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--purple-light);background:rgba(78,195,138,0.1);border:1px solid rgba(78,195,138,0.25);padding:2px 6px;white-space:nowrap;">Parent</span>
+                  <a href="ux-steering-files/ux-rise-build-guide.md" style="font-weight:700;color:var(--white);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.25);">ux-rise-build-guide</a>
+                </div>
+              </td>
+              <td style="padding:9px 0;color:rgba(241,241,241,0.65);line-height:1.5;vertical-align:top;">Entry point for building a new Hub UI feature in code. Loads Rise reasoning and pitfall context and lays out the build workflow.</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:9px 12px 9px 0;vertical-align:top;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:rgba(122,158,138,0.08);border:1px solid rgba(122,158,138,0.2);padding:2px 6px;white-space:nowrap;">Referenced</span>
+                  <a href="ux-steering-files/ux-rise-pitfalls-code.md" style="font-weight:700;color:var(--white);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.25);">ux-rise-pitfalls-code</a>
+                </div>
+              </td>
+              <td style="padding:9px 0;color:rgba(241,241,241,0.65);line-height:1.5;vertical-align:top;">Common anti-patterns and ways code drifts from the Rise system — and how to avoid them.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px 9px 0;vertical-align:top;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:rgba(122,158,138,0.08);border:1px solid rgba(122,158,138,0.2);padding:2px 6px;white-space:nowrap;">Referenced</span>
+                  <a href="ux-steering-files/ux-rise-rules-code.md" style="font-weight:700;color:var(--white);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.25);">ux-rise-rules-code</a>
+                </div>
+              </td>
+              <td style="padding:9px 0;color:rgba(241,241,241,0.65);line-height:1.5;vertical-align:top;">Canonical rules for how the Rise design system fits together — principles and the "why" behind them.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Delivery Kits 3×3 grid -->
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+          <div style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(241,241,241,0.75);font-weight:700;">Delivery Kits — Pattern Archetypes</div>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4EC3C3;background:rgba(78,195,195,0.08);border:1px solid rgba(78,195,195,0.3);padding:2px 7px;white-space:nowrap;">Coming Soon</span>
+        </div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:8px;line-height:1.6;">Nine foundational layout patterns exist within the Hub. Each delivery kit will include a relevant Figma template, steering file(s) with associated components, and live examples in the Hub to refer to. Kits marked <span style="color:var(--teal);font-weight:700;">★</span> are priority.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;">
+          <span style="font-size:11px;color:var(--white);background:rgba(0,25,15,0.8);border:1px solid rgba(92,184,0,0.15);padding:5px 14px;border-radius:999px;">Dashboard</span>
+          <span style="font-size:11px;color:var(--teal);background:rgba(92,184,0,0.07);border:1px solid rgba(92,184,0,0.3);padding:5px 14px;border-radius:999px;">List ★</span>
+          <span style="font-size:11px;color:var(--white);background:rgba(0,25,15,0.8);border:1px solid rgba(92,184,0,0.15);padding:5px 14px;border-radius:999px;">Record Detail</span>
+          <span style="font-size:11px;color:var(--teal);background:rgba(92,184,0,0.07);border:1px solid rgba(92,184,0,0.3);padding:5px 14px;border-radius:999px;">Single-Page Form ★</span>
+          <span style="font-size:11px;color:var(--white);background:rgba(0,25,15,0.8);border:1px solid rgba(92,184,0,0.15);padding:5px 14px;border-radius:999px;">Multi-Step Workflow</span>
+          <span style="font-size:11px;color:var(--teal);background:rgba(92,184,0,0.07);border:1px solid rgba(92,184,0,0.3);padding:5px 14px;border-radius:999px;">Map Experience ★</span>
+          <span style="font-size:11px;color:var(--white);background:rgba(0,25,15,0.8);border:1px solid rgba(92,184,0,0.15);padding:5px 14px;border-radius:999px;">Reporting &amp; Analytics</span>
+          <span style="font-size:11px;color:var(--white);background:rgba(0,25,15,0.8);border:1px solid rgba(92,184,0,0.15);padding:5px 14px;border-radius:999px;">Settings &amp; Preferences</span>
+          <span style="font-size:11px;color:var(--white);background:rgba(0,25,15,0.8);border:1px solid rgba(92,184,0,0.15);padding:5px 14px;border-radius:999px;">Auth &amp; Onboarding</span>
+        </div>
+      </div>
+
+
+    </div>
+    <div class="slide-num">06 / 06</div>
+  </div>
+
+</div>
+
+<!-- THUMBNAIL OVERVIEW PANEL -->
+<div id="thumb-panel">
+  <button class="thumb-close" onclick="closeThumbs()">&#10005;</button>
+  <h3>All Slides</h3>
+  <div class="thumb-grid">
+    <div class="thumb-card" onclick="jumpTo(0)">
+      <div class="thumb-num">01</div>
+      <div class="thumb-label">Cover</div>
+      <div class="thumb-title">UX Operating Model</div>
+      <div class="thumb-accent"></div>
+    </div>
+    <div class="thumb-card" onclick="jumpTo(1)">
+      <div class="thumb-num">02</div>
+      <div class="thumb-label">Digital User Experience</div>
+      <div class="thumb-title">Partnership + Impact</div>
+      <div class="thumb-accent"></div>
+    </div>
+    <div class="thumb-card" onclick="jumpTo(2)">
+      <div class="thumb-num">03</div>
+      <div class="thumb-label">Transformation</div>
+      <div class="thumb-title">At the Speed of What's Next</div>
+      <div class="thumb-accent"></div>
+    </div>
+    <div class="thumb-card" onclick="jumpTo(3)">
+      <div class="thumb-num">04</div>
+      <div class="thumb-label">Delivery</div>
+      <div class="thumb-title">Design Engagement &amp; Complexity</div>
+      <div class="thumb-accent"></div>
+    </div>
+    <div class="thumb-card" onclick="jumpTo(4)">
+      <div class="thumb-num">05</div>
+      <div class="thumb-label">Research &amp; Validation</div>
+      <div class="thumb-title">Adaptable User Engagement Cycles</div>
+      <div class="thumb-accent"></div>
+    </div>
+    <div class="thumb-card" onclick="jumpTo(5)">
+      <div class="thumb-num">06</div>
+      <div class="thumb-label">Developer Resources</div>
+      <div class="thumb-title">Delivery Kits &amp; Implementation Guides</div>
+      <div class="thumb-accent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>&#8592;</button>
+  <div class="nav-dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">&#8594;</button>
+  <span class="nav-counter" id="counter">1 / 7</span>
+  <button class="nav-grid-btn" onclick="openThumbs()" title="Overview (G)">&#9783;</button>
+</nav>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Build dots
+  const dotsContainer = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsContainer.appendChild(d);
+  });
+
+  function updateUI() {
+    const dots = document.querySelectorAll('.nav-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === total - 1;
+    document.getElementById('progress').style.width = `${((current + 1) / total) * 100}%`;
+    updateThumbActive();
+  }
+
+  function goTo(index) {
+    if (index === current) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+    setTimeout(() => slides[current - (index > current ? 0 : 0)].classList.remove('exit'), 600);
+
+    const prev = current;
+    current = index;
+    slides[current].classList.add('active');
+
+    setTimeout(() => slides[prev].classList.remove('exit'), 600);
+    updateUI();
+
+    // Replay slide 3 arrow animation each time the slide is entered
+    if (index === 2) {
+      const v = document.getElementById('s3-arrow');
+      if (v) { v.currentTime = 0; v.play(); }
+    }
+
+    // Trigger slide 2 text animation
+    const s2 = document.getElementById('s2');
+    if (index === 1) {
+      s2.classList.remove('text-ready');
+      requestAnimationFrame(() => requestAnimationFrame(() => s2.classList.add('text-ready')));
+    } else {
+      s2.classList.remove('text-ready');
+    }
+
+    // Trigger slide 4 card drop-in animation
+    const s4 = document.getElementById('s4');
+    if (index === 3) {
+      s4.classList.remove('cards-ready');
+      requestAnimationFrame(() => requestAnimationFrame(() => s4.classList.add('cards-ready')));
+    } else {
+      s4.classList.remove('cards-ready');
+    }
+
+    // Slide 6 resource card stack deal-in
+    const s6 = document.getElementById('s6');
+    if (index === 5) {
+      s6.classList.remove('stack-ready');
+      requestAnimationFrame(() => requestAnimationFrame(() => s6.classList.add('stack-ready')));
+    } else {
+      s6.classList.remove('stack-ready');
+    }
+
+    // Trigger slide 5 box slide-in animation
+    const s5 = document.getElementById('s5');
+    if (index === 4) {
+      s5.classList.remove('boxes-ready');
+      const boxes = s5.querySelectorAll('.ec-phase.active .ec-phase-activity');
+      boxes.forEach((box, i) => { box.style.animationDelay = (0.05 + i * 0.15) + 's'; });
+      requestAnimationFrame(() => requestAnimationFrame(() => s5.classList.add('boxes-ready')));
+    } else {
+      s5.classList.remove('boxes-ready');
+    }
+  }
+
+  function navigate(dir) {
+    const next = current + dir;
+    if (next >= 0 && next < total) goTo(next);
+  }
+
+  // Thumbnail overview
+  function openThumbs() {
+    const panel = document.getElementById('thumb-panel');
+    panel.classList.add('open');
+    updateThumbActive();
+  }
+  function closeThumbs() {
+    document.getElementById('thumb-panel').classList.remove('open');
+  }
+  function jumpTo(index) {
+    closeThumbs();
+    goTo(index);
+  }
+  function updateThumbActive() {
+    document.querySelectorAll('.thumb-card').forEach((c, i) => {
+      c.classList.toggle('thumb-active', i === current);
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const panel = document.getElementById('thumb-panel');
+    if (panel.classList.contains('open')) {
+      if (e.key === 'Escape') closeThumbs();
+      return;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') navigate(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+    if (e.key === 'g' || e.key === 'G') openThumbs();
+  });
+
+  // Scroll / trackpad swipe
+  let scrollAccum = 0;
+  let scrollLocked = false;
+  document.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (scrollLocked || document.getElementById('thumb-panel').classList.contains('open')) return;
+    scrollAccum += e.deltaY;
+    if (Math.abs(scrollAccum) > 60) {
+      navigate(scrollAccum > 0 ? 1 : -1);
+      scrollAccum = 0;
+      scrollLocked = true;
+      setTimeout(() => { scrollLocked = false; }, 700);
+    }
+  }, { passive: false });
+
+  updateUI();
+</script>
+</body>
+</html>
