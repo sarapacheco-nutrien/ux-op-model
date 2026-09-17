@@ -12,7 +12,7 @@ When making experience decisions, reviewing ideas, or generating UX recommendati
 
 - #[[file:ux-design-thinking.md]] — user personas, agriculture context, expected AI behavior, usability heuristics, and operational reality checks.
 
-## Rise Implementation
+## Rise Design System
 
 When implementing any new UI, pull in the Rise build guide:
 
